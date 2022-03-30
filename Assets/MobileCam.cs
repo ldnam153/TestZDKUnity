@@ -19,16 +19,30 @@ public class MobileCam : MonoBehaviour
 	public Transform tree;
 	private int currentPrivate = -1;
 	public int current = 0;
-	static string persistentPath = ""; 
+	static string persistentPath = "";
 	string[] imgPaths = {
-		"frame_00010_rotated.png",
-		"frame_00020_rotated.png",
-		"frame_00030_rotated.png",
 		"000004.jpg",
 		"000009.jpg",
 		"000015.jpg",
+		"000254.jpg",
+		"000171.jpg",
 	};
-	
+
+	Vector3[] rotations = {
+		new Vector3(1.20407f, -1.25028f, -1.23946f),
+		new Vector3(1.28196f, -1.06880f, -1.22331f),
+		new Vector3(0.76190f, -1.51367f, -0.83431f),
+		new Vector3(1.24461f, -1.32601f, -1.44473f),
+		new Vector3(1.34213f, -0.89789f, -1.13181f),
+	};
+	Vector3[] positions = {
+		new Vector3(0.00863f, 0.00107f, -5.07090f),
+		new Vector3(0.00196f, -0.00795f, -10.74275f),
+		new Vector3(0.00358f, 0.00391f, -9.38451f),
+		new Vector3(-0.00959f, 0.01902f, -5.11294f),
+		new Vector3(-0.02898f, -0.00988f, -5.13661f)
+	};
+
 	int index = 0;
 	public bool loop = false;	
 	List<string> outputs = new List<string>();
@@ -41,10 +55,10 @@ public class MobileCam : MonoBehaviour
 	void Start()
 	{
 		//print(DataSerializer.dataPath);
-		DataZDK [] temp = new DataZDK[0];
-		DataSerializer.DeserializeData(out temp);
-		print(temp.Length);
-		data.AddRange(temp);
+		//DataZDK [] temp = new DataZDK[0];
+		//DataSerializer.DeserializeData(out temp);
+		//print(temp.Length);
+		//data.AddRange(temp);
 		initPoseTracker();
 		
 	}
@@ -54,6 +68,7 @@ public class MobileCam : MonoBehaviour
 	{
 		
 		// Adjust camera from outputs in file
+
 		if (loop){
 			delay -= Time.deltaTime;
 			if (delay <=0 ){
@@ -72,7 +87,8 @@ public class MobileCam : MonoBehaviour
 		else{
 			if (current != currentPrivate){
 				if (current >= 0 && current < imgPaths.Length ){
-					predict2(LoadImage(persistentPath + imgPaths[current]));
+					//predict2(LoadImage(persistentPath + imgPaths[current]));
+					adjustCamera(rotations[current], positions[current]);
 					currentPrivate = current;
 				}
 			}
@@ -83,7 +99,7 @@ public class MobileCam : MonoBehaviour
 	
 	private void OnApplicationQuit() {
 		
-		//DataSerializer.SerializeData(data.ToArray());
+		DataSerializer.SerializeData(data.ToArray());
 	}
 	static byte[] LoadImage(string fileName)
 	{
@@ -215,14 +231,28 @@ public class MobileCam : MonoBehaviour
 		P.DestroyTimePoint(t);
 
 
-		Vector3 rotation = new Vector3(c_rvecs[0], c_rvecs[1] + 90, c_rvecs[2]);
-		Vector3 pos = new Vector3(c_tvecs[0], c_tvecs[1], c_tvecs[2]);
-		// DataZDK d = new DataZDK(){
-		// 	Position = new SerializableVector3(pos),
-		// 	EulerAngles = new SerializableVector3(rotation),
-		// };
-		// data.Add(d);
-		adjustCamera(rotation, pos);
+	//	Vector3 rotation = new Vector3(c_rvecs[0], c_rvecs[1], c_rvecs[2]);
+		//Vector3 pos = new Vector3(c_tvecs[0], c_tvecs[1], c_tvecs[2]);
+
+
+
+        //Vector3 rotation = new Vector3(1.20407f, -1.25028f, -1.23946f);
+        //Vector3 pos = new Vector3(0.00863f, 0.00107f, -5.07090f);
+
+        //Vector3 rotation = new Vector3(1.28196f, - 1.06880f, - 1.22331f);
+       // Vector3 pos = new Vector3(0.00196f, - 0.00795f, - 10.74275f);
+
+        Vector3 rotation = new Vector3(0.76190f, - 1.51367f, - 0.83431f);
+        Vector3 pos = new Vector3(0.00358f, 0.00391f, - 9.38451f);
+
+
+
+        // DataZDK d = new DataZDK(){
+        // 	Position = new SerializableVector3(pos),
+        // 	EulerAngles = new SerializableVector3(rotation),
+        // };
+        // data.Add(d);
+        adjustCamera(rotation, pos);
 
 	}
 	void predict(Texture2D image)
@@ -259,7 +289,7 @@ public class MobileCam : MonoBehaviour
 		P.DestroyTimePoint(t);
 
 
-		Vector3 rotation = new Vector3(c_rvecs[0], c_rvecs[1] + 90, c_rvecs[2]);
+		Vector3 rotation = new Vector3(c_rvecs[0], c_rvecs[1], c_rvecs[2]);
 		Vector3 pos = new Vector3(c_tvecs[0], c_tvecs[1], c_tvecs[2]);
 		adjustCamera(rotation, pos);
 	
@@ -267,6 +297,7 @@ public class MobileCam : MonoBehaviour
 	void adjustCamera(Vector3 rotationOfTree, Vector3 positionOfTree)
     {
 		Vector3 eulerAngle = convertAxisAngleToEulerAngle(rotationOfTree);
+		eulerAngle.z -= 90;
 
 		var matrix =  (Matrix4x4.TRS(positionOfTree - tree.position, Quaternion.Euler(eulerAngle), Vector3.one)).inverse;
 
